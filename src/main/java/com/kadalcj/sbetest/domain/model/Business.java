@@ -68,4 +68,16 @@ public class Business {
     @JsonProperty("location")
     @NotNull(message = "Location can't be null")
     private Location location;
+
+    @JsonProperty("phone")
+    @NotNull(message = "Phone can't be null")
+    private String phone;
+
+    @JsonProperty("display_phone")
+    @NotNull(message = "Display Phone can't be null")
+    private String displayPhone;
+
+    @JsonProperty("distance")
+    @NotNull(message = "Distance can't be null")
+    private double Distance;
 }

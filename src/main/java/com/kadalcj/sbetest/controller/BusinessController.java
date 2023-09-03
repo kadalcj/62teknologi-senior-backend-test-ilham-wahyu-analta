@@ -34,10 +34,13 @@ public class BusinessController {
 
     @GetMapping("/search")
     public ResponseEntity<HashMap<String, List<Business>>> getSearch(
-            @RequestParam(name = "limit", required = false) int limit,
-            @RequestParam(name = "offset", required = false) int offset
+            @RequestParam(name = "categories", required = false) List<String> categories,
+            @RequestParam(name = "price", required = false) List<Integer> price,
+            @RequestParam(name = "sort_by", required = false) String sort_by,
+            @RequestParam(name = "limit", required = false) Integer limit,
+            @RequestParam(name = "offset", required = false) Integer offset
     ) {
-        List<Business> businessList = businessService.getBusinessByCriteria(limit, offset);
+        List<Business> businessList = businessService.getBusinessBySearch(categories, price, sort_by, limit, offset);
 
         HashMap<String, List<Business>> result = new HashMap<>();
         result.put("businesses", businessList);
@@ -47,6 +50,11 @@ public class BusinessController {
     @PostMapping
     public ResponseEntity<Business> createBusiness(@Valid @RequestBody Business business) {
         return new ResponseEntity<>(businessService.createBusiness(business), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<Business>> batchCreateBusiness(@Valid @RequestBody List<Business> businesses) {
+        return new ResponseEntity<>(businessService.batchCreateBusiness(businesses), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
