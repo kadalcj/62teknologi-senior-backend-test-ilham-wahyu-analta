@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: pg-new
+    environment:
+      POSTGRES_DB: kadalcj
+      POSTGRES_USER: kadalcj
+      POSTGRES_PASSWORD: kadalcj
+    ports:
+      - "5432:5432"
+    networks:
+      - sbe-network
+
+  springbootapp:
+    image: sbe-springboot:latest
+    container_name: sbe
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    networks:
+      - sbe-network
+
+networks:
+  sbe-network:
+    driver: bridge

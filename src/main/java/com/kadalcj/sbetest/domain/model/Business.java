@@ -41,7 +41,7 @@ public class Business {
 
     @JsonProperty("review_count")
     @NotNull(message = "review_count can't be null")
-    private long reviewCount;
+    private Integer reviewCount;
 
     @ElementCollection
     @JsonProperty("categories")
@@ -79,5 +79,5 @@ public class Business {
 
     @JsonProperty("distance")
     @NotNull(message = "Distance can't be null")
-    private double Distance;
+    private double distance;
 }

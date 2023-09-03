@@ -26,41 +26,55 @@ public class BusinessService {
     }
 
     public List<Business> getBusinessBySearch(List<String> categories, List<Integer> price, String sort_by, Integer limit, Integer offset) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Business> query = cb.createQuery(Business.class);
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Business> query = builder.createQuery(Business.class);
         Root<Business> root = query.from(Business.class);
+        Join<Business, Category> categoryJoin = root.join("categories");
 
+        // Select All
         query.select(root);
 
-        Join<Business, Category> categoryJoin = root.join("categories");
-        if (categories != null && !categories.isEmpty()) {
-            List<Predicate> predicatesAlias = categories.stream()
-                    .map(alias -> cb.equal(categoryJoin.get("alias"), alias))
-                    .toList();
-
-            query.where(cb.or(predicatesAlias.toArray(new Predicate[0])));
-        }
-
-        if (price != null && !price.isEmpty()) {
-            List<Predicate> predicatePrice = price.stream()
-                    .map(priceFilter -> cb.equal(root.get("price"), convertPrice(priceFilter)))
-                    .toList();
-
-            query.where(cb.or(predicatePrice.toArray(new Predicate[0])));
-        }
-
-        if (sort_by != null) {
-            switch (sort_by) {
-                case "rating":
-                    query.orderBy(cb.desc(root.get("rating")));
-                case "review_count":
-                    query.orderBy(cb.desc(root.get("reviewCount")));
-                case "distance":
-                    query.orderBy(cb.asc(root.get("Distance")));
-                default:
-                    /// Best Match
+        /// Filter Category
+        List<Predicate> categoryPredicates = new ArrayList<>();
+        if (categories != null) {
+            for (String categoryAlias : categories) {
+                Predicate aliasPredicate = builder.equal(categoryJoin.get("alias"), categoryAlias);
+                categoryPredicates.add(aliasPredicate);
             }
         }
+
+        /// Filter Price
+        List<Predicate> pricePredicates = new ArrayList<>();
+        if (price != null) {
+            for (Integer priceFilter : price) {
+                Predicate pricePredicate = builder.equal(root.get("price"), convertPrice(priceFilter));
+                pricePredicates.add(pricePredicate);
+            }
+        }
+
+        // Combine Predicate
+        if (!categoryPredicates.isEmpty()){
+            if (!pricePredicates.isEmpty()) {
+                Predicate finalPredicate = builder.and(
+                        builder.or(categoryPredicates.toArray(new Predicate[0])),
+                        builder.or(pricePredicates.toArray(new Predicate[0]))
+                );
+                query.where(finalPredicate);
+            } else {
+                query.where(builder.or(categoryPredicates.toArray(new Predicate[0])));
+            }
+        } else {
+            query.where(builder.or(pricePredicates.toArray(new Predicate[0])));
+        }
+
+        /// Sort By
+        Order sortOrder = null;
+        if (sort_by != null) {
+            if (sort_by.equals("rating")) sortOrder = builder.desc(root.get("rating"));
+            if (sort_by.equals("review_count")) sortOrder = builder.desc(root.get("reviewCount"));
+            if (sort_by.equals("distance")) sortOrder = builder.asc(root.get("distance"));
+        }
+        if (sortOrder != null) query.orderBy(sortOrder);
 
         TypedQuery<Business> typedQuery = entityManager.createQuery(query);
         if (limit != null) typedQuery.setMaxResults(limit);
@@ -112,7 +126,7 @@ public class BusinessService {
             case 2 -> "$$";
             case 3 -> "$$$";
             case 4 -> "$$$$";
-            default -> "";
+            default -> throw new EntityNotFoundException("Min Price 1, max Price 4");
         };
     }
 }
